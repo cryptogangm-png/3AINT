@@ -1,8 +1,8 @@
 # Manic Minelayers 
 
 ## Dépendances : 
-- Pygame 2.6.1
-- Python 3.13.2
+- Pygame 2.6.1 : https://pypi.org/project/pygame/
+- Python 3.13.2 : https://www.python.org/downloads/latest/python3.13/
 
 Ecrire `python .\Game.py` dans un terminal à la racine du projet pour lancer le jeu
 
