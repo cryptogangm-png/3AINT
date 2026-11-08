@@ -11,6 +11,15 @@ class ManicMinelayers:
         self.__n = n
         self.reinitialiser()
 
+    def get_m(self):
+        return self.__m
+
+    def get_n(self):
+        return self.__n
+
+    def get_case(self, ligne, colonne):
+        return self.__plateau[ligne][colonne]
+
     def get_joueur_courant(self):
         return self.__joueur_courant
 
