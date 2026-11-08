@@ -35,11 +35,11 @@ class MinMax:
     def __minmax(self, jeu, profondeur, alpha, beta):
         if jeu.est_fini():
             if jeu.get_gagnant() == self.__moi:
-                return 1000
+                return 1000 + profondeur
             elif jeu.get_gagnant() == 0:
                 return 0
             else:
-                return -1000
+                return -(1000 + profondeur)
 
         if profondeur == 0:
             return self.__evaluer(jeu)
