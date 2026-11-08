@@ -130,7 +130,7 @@ Elle fait donc une boucle qui se répète autant que l'on souhaite en fonction d
 Elle va ensuite, en fonction du gagnant, ajouter +1 à victoires_premier, victoires_second ou nuls après avoir executer **`__jouer_une_partie`**.
 Elle finira par renvoyer les resultats.
 
-La méthode **`lancer`** est la seule méthode publique de la classe, c'est elle que l'on va appeler dans le programme principal pour lancer les tests. Elle appelle deux fois la fonction privée `__jouer_serie`, qui elle appellera `__jouer_une_partie` : la moitié des parties avec le joueur a qui commence, puis l'autre moitié avec le joueur b qui commence, pour que ce soit équitable. Elle affiche les résultats, puis renvoie les victoires du joueur qui commence, celles du second et les nuls, pour qu'on puisse étudier à la fin l'influence du joueur qui commence sur toutes les parties.
+La méthode **`lancer`** fait s'affronter deux IA sur `nb_parties` parties. Pour que le match soit équitable, les parties sont réparties en deux moitiés : chaque IA commence la moitié des parties. La fonction affiche les résultats de chaque moitié et le total, puis renvoie un triplet `(victoires du joueur qui commence, victoires du second joueur, nuls)`.
 
 Au lancement, on choisit le nombre de parties puis le mode : 1 pour les statistiques sur tous les couples d'IA, 2 pour regarder deux IA s'affronter dans la GUI. La fonction **`choisir_ia`** sert à choisir les deux IA (l'humain n'est pas proposé ici), et **`demander_entier`** redemande le nombre de parties tant que la réponse n'est pas un nombre valide.
 
