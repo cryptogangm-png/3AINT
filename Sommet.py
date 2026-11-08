@@ -1,46 +1,47 @@
 """Un état indépendant et ses statistiques dans l'arbre MCTS."""
 
-from copy import deepcopy
 from math import log, sqrt
 
 
 class Sommet:
-    def __init__(self, jeu, joueur, parent=None, coup=None):
-        if joueur not in (1, 2):
-            raise ValueError("Le joueur doit être 1 ou 2")
-        self.__jeu = deepcopy(jeu)
-        self.__joueur = joueur  # Joueur qui doit jouer dans cet état.
+    def __init__(self, jeu, parent=None, coup=None):
+        self.__jeu = jeu.copie()
+        self.__joueur = self.__jeu.get_joueur_courant()
         self.__parent = parent
         self.__coup = coup
         self.__enfants = []
-        self.__coups_restants = list(self.__jeu.coups_possibles(joueur))
+        self.__coups_restants = list(self.__jeu.coups_possibles())
         self.__visites = 0
         self.__gains = 0.0
 
-    
+    @property
     def joueur(self):
         return self.__joueur
-    
+
+    @property
     def parent(self):
         return self.__parent
 
+    @property
     def coup(self):
         return self.__coup
-    
+
+    @property
     def enfants(self):
         return tuple(self.__enfants)
 
+    @property
     def visites(self):
         return self.__visites
 
+    @property
     def gains(self):
         return self.__gains
-
     def copier_jeu(self):
-        return deepcopy(self.__jeu)
+        return self.__jeu.copie()
 
     def est_terminal(self):
-        return self.__jeu.gagnant() != 0 or self.__jeu.est_nul()
+        return self.__jeu.est_fini()
 
     def est_complet(self):
         return not self.__coups_restants
@@ -52,8 +53,8 @@ class Sommet:
         coup = hasard.choice(self.__coups_restants)
         self.__coups_restants.remove(coup)
         jeu = self.copier_jeu()
-        jeu.jouer_coup(coup, self.__joueur)
-        enfant = Sommet(jeu, jeu.adversaire(self.__joueur), self, coup)
+        jeu.jouer(coup)
+        enfant = Sommet(jeu, self, coup)
         self.__enfants.append(enfant)
         return enfant
 
