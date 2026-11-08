@@ -71,11 +71,13 @@ class Game:
         return 1 - self.__premier
 
     def __nom(self, index):
-        nom_a = self.__participants[0].get_nom()
-        nom_b = self.__participants[1].get_nom()
         nom = self.__participants[index].get_nom()
-        if nom_a == nom_b:  # deux fois la même IA : on les distingue
-            nom += " (A)" if index == 0 else " (B)"
+        # Si c'est deux fois la même IA, on ajoute (A) ou (B) pour les distinguer
+        if self.__participants[0].get_nom() == self.__participants[1].get_nom():
+            if index == 0:
+                nom = nom + " (A)"
+            else:
+                nom = nom + " (B)"
         return nom
 
     # --- Déroulé d'une partie ---
@@ -105,9 +107,9 @@ class Game:
         return texte
 
     def __texte_score(self):
-        return (f"Partie {self.__partie}/{self.__nb_parties}   |   "
-                f"{self.__nom(0)} : {self.__victoires[0]}   "
-                f"{self.__nom(1)} : {self.__victoires[1]}   Nuls : {self.__nuls}")
+        return (f"Partie {self.__partie}/{self.__nb_parties} | "
+                f"{self.__nom(0)} : {self.__victoires[0]} | "
+                f"{self.__nom(1)} : {self.__victoires[1]} | Nuls : {self.__nuls}")
 
     def __afficher(self):
         self.__ecran.fill(self.__COULEURS["Blanc"])
@@ -136,10 +138,12 @@ class Game:
                     pygame.draw.circle(self.__ecran, self.__COULEURS["Bleu"],
                                        rectangle.center, self.__taille_case // 3)
 
+        # Les deux lignes de texte sous le plateau
         y = self.__m * self.__taille_case
-        for ligne, texte in enumerate((self.__texte_statut(), self.__texte_score())):
-            surface = self.__police.render(texte, True, self.__COULEURS["Noir"])
-            self.__ecran.blit(surface, (10, y + 10 + ligne * 28))
+        statut = self.__police.render(self.__texte_statut(), True, self.__COULEURS["Noir"])
+        score = self.__police.render(self.__texte_score(), True, self.__COULEURS["Noir"])
+        self.__ecran.blit(statut, (10, y + 10))
+        self.__ecran.blit(score, (10, y + 38))
         pygame.display.flip()
 
     # --- Boucle principale ---
@@ -180,26 +184,34 @@ class Game:
 
 
 def choisir_joueur(jeu, titre):
-    """Affiche la liste des joueurs dans le terminal et crée celui qui est choisi."""
-    options = {
-        "1": ("Humain", lambda: Human(jeu)),
-        "2": ("Stupid Bot", lambda: StupidBot(jeu)),
-        "3": ("MinMax heuristique 1", lambda: MinMax(jeu, profondeur=5, heuristique=1)),
-        "4": ("MinMax heuristique 2", lambda: MinMax(jeu, profondeur=5, heuristique=2)),
-        "5": ("Glouton", lambda: Glouton(jeu)),
-        "6": ("MCTS", lambda: MCTS(jeu, iterations=1000)),
-    }
-    print(f"\n{titre} :")
-    for cle, (nom, _) in options.items():
-        print(f"  {cle}. {nom}")
-    choix = input("Choix : ").strip()
-    while choix not in options:
-        choix = input("Choix invalide, recommence : ").strip()
-    return options[choix][1]()
+    """Affiche la liste des joueurs et renvoie celui qui est choisi."""
+    print()
+    print(titre)
+    print("1. Humain")
+    print("2. Stupid Bot")
+    print("3. MinMax heuristique 1")
+    print("4. MinMax heuristique 2")
+    print("5. Glouton")
+    print("6. MCTS")
+    while True:
+        choix = input("Choix : ")
+        if choix == "1":
+            return Human(jeu)
+        if choix == "2":
+            return StupidBot(jeu)
+        if choix == "3":
+            return MinMax(jeu, profondeur=5, heuristique=1)
+        if choix == "4":
+            return MinMax(jeu, profondeur=5, heuristique=2)
+        if choix == "5":
+            return Glouton(jeu)
+        if choix == "6":
+            return MCTS(jeu, iterations=1000)
+        print("Choix invalide, recommence.")
 
 
 if __name__ == "__main__":
     jeu = ManicMinelayers(5, 10)
-    joueur_a = choisir_joueur(jeu, "Joueur 1 (rouge)")
-    joueur_b = choisir_joueur(jeu, "Joueur 2 (bleu)")
+    joueur_a = choisir_joueur(jeu, "Joueur 1 (rouge) :")
+    joueur_b = choisir_joueur(jeu, "Joueur 2 (bleu) :")
     Game(jeu, joueur_a, joueur_b).lancer()

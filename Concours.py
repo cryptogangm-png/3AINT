@@ -1,4 +1,3 @@
-import time
 from itertools import combinations
 
 from ManicMinelayers import ManicMinelayers
@@ -42,83 +41,67 @@ class Concours:
         return victoires_premier, victoires_second, nuls
 
     def lancer(self, nb_parties=100):
-        """Moitié des parties avec A qui commence, moitié avec B qui commence."""
+        """Moitié des parties avec A qui commence, moitié avec B qui commence.
+        Affiche les résultats et renvoie les victoires du joueur qui commence,
+        celles du second joueur et les nuls (pour étudier l'influence du premier joueur)."""
+        nom_a = self.__joueur_a.get_nom()
+        nom_b = self.__joueur_b.get_nom()
         moitie = nb_parties // 2
-        a_commence = self.__jouer_serie(self.__joueur_a, self.__joueur_b, moitie)
-        b_commence = self.__jouer_serie(self.__joueur_b, self.__joueur_a, moitie)
-        return {
-            "a": self.__joueur_a.get_nom(),
-            "b": self.__joueur_b.get_nom(),
-            "a_commence": a_commence,  # (victoires A, victoires B, nuls)
-            "b_commence": b_commence,  # (victoires B, victoires A, nuls)
-        }
+
+        a_1, b_1, nuls_1 = self.__jouer_serie(self.__joueur_a, self.__joueur_b, moitie)
+        b_2, a_2, nuls_2 = self.__jouer_serie(self.__joueur_b, self.__joueur_a, moitie)
+
+        print()
+        print(nom_a, "contre", nom_b)
+        print("  " + nom_a, "commence :", nom_a, a_1, "|", nom_b, b_1, "| nuls", nuls_1)
+        print("  " + nom_b, "commence :", nom_a, a_2, "|", nom_b, b_2, "| nuls", nuls_2)
+        print("  Total :", nom_a, a_1 + a_2, "|", nom_b, b_1 + b_2, "| nuls", nuls_1 + nuls_2)
+
+        return a_1 + b_2, b_1 + a_2, nuls_1 + nuls_2
 
 
-def demander_entier(question, minimum=1):
-    """Redemande tant que la réponse n'est pas un entier valide."""
-    while True:
-        reponse = input(question).strip()
-        if reponse.isdigit() and int(reponse) >= minimum:
-            return int(reponse)
-        print(f"Il faut un nombre entier supérieur ou égal à {minimum}.")
+def demander_entier(question):
+    """Redemande tant que la réponse n'est pas un nombre d'au moins 2."""
+    reponse = input(question)
+    while not reponse.isdigit() or int(reponse) < 2:
+        reponse = input("Il faut un nombre entier d'au moins 2 : ")
+    return int(reponse)
 
 
 def choisir_ia(jeu, titre):
-    """Affiche la liste des IA dans le terminal et crée celle qui est choisie."""
-    options = {
-        "1": ("Stupid Bot", lambda: StupidBot(jeu)),
-        "2": ("MinMax heuristique 1", lambda: MinMax(jeu, profondeur=5, heuristique=1)),
-        "3": ("MinMax heuristique 2", lambda: MinMax(jeu, profondeur=5, heuristique=2)),
-        "4": ("Glouton", lambda: Glouton(jeu)),
-        "5": ("MCTS", lambda: MCTS(jeu, iterations=300)),
-    }
-    print(f"\n{titre} :")
-    for cle, (nom, _) in options.items():
-        print(f"  {cle}. {nom}")
-    choix = input("Choix : ").strip()
-    while choix not in options:
-        choix = input("Choix invalide, recommence : ").strip()
-    return options[choix][1]()
-
-
-def afficher_resultats(resultats, nb_parties):
-    moitie = nb_parties // 2
+    """Affiche la liste des IA et renvoie celle qui est choisie."""
     print()
-    print(f"{'Affrontement':<28} | {'A commence':^17} | {'B commence':^17} | {'Total':^17}")
-    print(f"{'(A contre B)':<28} | {'A   B   nul':^17} | {'A   B   nul':^17} | {'A   B   nul':^17}")
-    print("-" * 88)
-
-    victoires_premier = 0
-    victoires_second = 0
-    nuls_total = 0
-
-    for r in resultats:
-        va1, vb1, n1 = r["a_commence"]
-        vb2, va2, n2 = r["b_commence"]
-        nom = r["a"] + " vs " + r["b"]
-        print(f"{nom:<28} | {va1:>3} {vb1:>3} {n1:>3}       | {va2:>3} {vb2:>3} {n2:>3}       | "
-              f"{va1 + va2:>3} {vb1 + vb2:>3} {n1 + n2:>3}")
-        victoires_premier += va1 + vb2
-        victoires_second += vb1 + va2
-        nuls_total += n1 + n2
-
-    total = victoires_premier + victoires_second + nuls_total
-    print("-" * 88)
-    print(f"Influence du premier joueur sur {total} parties ({moitie} par sens et par couple) :")
-    print(f"  le joueur qui commence gagne {victoires_premier} fois ({100 * victoires_premier / total:.1f} %)")
-    print(f"  le second joueur gagne {victoires_second} fois ({100 * victoires_second / total:.1f} %)")
-    print(f"  matchs nuls : {nuls_total} ({100 * nuls_total / total:.1f} %)")
+    print(titre)
+    print("1. Stupid Bot")
+    print("2. MinMax heuristique 1")
+    print("3. MinMax heuristique 2")
+    print("4. Glouton")
+    print("5. MCTS")
+    while True:
+        choix = input("Choix : ")
+        if choix == "1":
+            return StupidBot(jeu)
+        if choix == "2":
+            return MinMax(jeu, profondeur=5, heuristique=1)
+        if choix == "3":
+            return MinMax(jeu, profondeur=5, heuristique=2)
+        if choix == "4":
+            return Glouton(jeu)
+        if choix == "5":
+            return MCTS(jeu, iterations=300)
+        print("Choix invalide, recommence.")
 
 
 if __name__ == "__main__":
     jeu = ManicMinelayers(5, 10)
-    nb_parties = demander_entier("Nombre de parties par affrontement : ", minimum=2)
+    nb_parties = demander_entier("Nombre de parties par affrontement : ")
 
-    print("\n1. Statistiques sur tous les couples d'IA (sans affichage)")
+    print()
+    print("1. Statistiques sur tous les couples d'IA (sans affichage)")
     print("2. Regarder un affrontement entre deux IA dans la GUI")
-    mode = input("Choix : ").strip()
-    while mode not in ("1", "2"):
-        mode = input("Choix invalide, recommence : ").strip()
+    mode = input("Choix : ")
+    while mode != "1" and mode != "2":
+        mode = input("Choix invalide, recommence : ")
 
     if mode == "1":
         joueurs = [
@@ -128,16 +111,25 @@ if __name__ == "__main__":
             Glouton(jeu),
             MCTS(jeu, iterations=300),
         ]
-        resultats = []
+
+        victoires_premier = 0
+        victoires_second = 0
+        nuls = 0
+        # combinations donne tous les couples possibles de joueurs (10 affrontements)
         for joueur_a, joueur_b in combinations(joueurs, 2):
-            debut = time.perf_counter()
-            print(f"{joueur_a.get_nom()} contre {joueur_b.get_nom()}...", end=" ", flush=True)
-            resultats.append(Concours(jeu, joueur_a, joueur_b).lancer(nb_parties))
-            print(f"{time.perf_counter() - debut:.1f} s")
-        afficher_resultats(resultats, nb_parties)
+            premier, second, nul = Concours(jeu, joueur_a, joueur_b).lancer(nb_parties)
+            victoires_premier += premier
+            victoires_second += second
+            nuls += nul
+
+        print()
+        print("Influence du joueur qui commence, sur toutes les parties :")
+        print("  Le joueur qui commence gagne", victoires_premier, "fois")
+        print("  Le second joueur gagne", victoires_second, "fois")
+        print("  Matchs nuls :", nuls)
 
     else:
         from Game import Game
-        joueur_a = choisir_ia(jeu, "IA A (commence la première partie)")
-        joueur_b = choisir_ia(jeu, "IA B")
+        joueur_a = choisir_ia(jeu, "IA A (commence la première partie) :")
+        joueur_b = choisir_ia(jeu, "IA B :")
         Game(jeu, joueur_a, joueur_b, nb_parties, delai_ia=300, pause_fin=1000).lancer()
