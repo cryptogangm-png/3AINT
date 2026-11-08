@@ -4,6 +4,11 @@
 - Pygame 2.6.1 : https://pypi.org/project/pygame/
 - Python 3.13.2 : https://www.python.org/downloads/latest/python3.13/
 
+## Bibliothèques : 
+- copy : deepcopy
+- random : Random
+- math : log, sqrt
+
 Ecrire `python .\Game.py` dans un terminal à la racine du projet pour lancer le jeu
 
 ## ManicMinelayers.py : 

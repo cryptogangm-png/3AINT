@@ -6,12 +6,8 @@ from Sommet import Sommet
 
 
 class MCTS:
-    def __init__(self, jeu, joueur, iterations=1000,
+    def __init__(self, jeu, iterations=1000,
                  temperature=math.sqrt(2), temps_max=None, graine=None):
-
-        if joueur not in (1, 2):
-            raise ValueError("Le joueur doit être 1 ou 2")
-
         if iterations is not None:
             if not isinstance(iterations, int) or iterations <= 0:
                 raise ValueError("Le nombre d'itérations doit être positif")
@@ -27,7 +23,6 @@ class MCTS:
             raise ValueError("Il faut au moins une limite de recherche")
 
         self.__jeu = jeu
-        self.__joueur = joueur
         self.__iterations = iterations
         self.__temperature = temperature
         self.__temps_max = temps_max
@@ -36,6 +31,9 @@ class MCTS:
         self.__hasard = random.Random(graine)
         self.__iterations_effectuees = 0
 
+    def get_nom(self):
+        return "MCTS"
+
     @property
     def iterations_effectuees(self):
         return self.__iterations_effectuees
@@ -43,30 +41,26 @@ class MCTS:
     def __simuler(self, sommet):
         # On joue sur une copie pour ne pas modifier la vraie partie.
         jeu = sommet.copier_jeu()
-        joueur = sommet.joueur
-
-        while jeu.gagnant() == 0 and not jeu.est_nul():
-            coups = jeu.coups_possibles(joueur)
+        while not jeu.est_fini():
+            coups = jeu.coups_possibles()
 
             if not coups:
                 raise RuntimeError("Le joueur ne peut pas jouer")
 
             coup = self.__hasard.choice(coups)
-            jeu.jouer_coup(coup, joueur)
-
-            joueur = jeu.adversaire(joueur)
+            jeu.jouer(coup)
 
         # 1 ou 2 pour une victoire, 0 pour un match nul.
-        return jeu.gagnant()
+        return jeu.get_gagnant()
 
     def choisir_coup(self):
         self.__iterations_effectuees = 0
-        racine = Sommet(self.__jeu, self.__joueur)
+        racine = Sommet(self.__jeu)
 
         if racine.est_terminal():
             return None
 
-        coups = self.__jeu.coups_possibles(self.__joueur)
+        coups = self.__jeu.coups_possibles()
 
         if not coups:
             return None
