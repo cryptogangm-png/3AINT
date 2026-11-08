@@ -3,8 +3,7 @@ from copy import deepcopy
 class ManicMinelayers:
     valeur_case_vide = 0
     valeur_case_mine = 3
-    __sauts_possibles = ((-2, -1), (-2, 1), (-1, -2), (-1, 2),
-               (1, -2), (1, 2), (2, -1), (2, 1))
+    __sauts_possibles = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
 
     def __init__(self, m=5, n=10):
         self.__m = m
@@ -23,7 +22,6 @@ class ManicMinelayers:
     def get_joueur_courant(self):
         return self.__joueur_courant
 
-    # --- Gestion de la partie ---
     def reinitialiser(self):
         self.__plateau = [[self.valeur_case_vide] * self.__n for _ in range(self.__m)]
         self.__positions = {1: None, 2: None}
@@ -69,7 +67,6 @@ class ManicMinelayers:
         self.__positions[joueur] = coup
         self.__joueur_courant = self.adversaire(joueur)
 
-    # --- Fin de partie ---
     def est_bloque(self, joueur):
         if self.__positions[joueur] is None:
             return False

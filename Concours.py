@@ -15,7 +15,6 @@ class Concours:
         self.__joueur_b = joueur_b
 
     def __jouer_une_partie(self, premier, second):
-        """Joue une partie complète et renvoie 1, 2 (le gagnant) ou 0 (nul)."""
         self.__jeu.reinitialiser()
         while not self.__jeu.est_fini():
             if self.__jeu.get_joueur_courant() == 1:
@@ -26,7 +25,6 @@ class Concours:
         return self.__jeu.get_gagnant()
 
     def __jouer_serie(self, premier, second, nb_parties):
-        """Renvoie (victoires du premier, victoires du second, nuls)."""
         victoires_premier = 0
         victoires_second = 0
         nuls = 0
@@ -41,9 +39,6 @@ class Concours:
         return victoires_premier, victoires_second, nuls
 
     def lancer(self, nb_parties=100):
-        """Moitié des parties avec A qui commence, moitié avec B qui commence.
-        Affiche les résultats et renvoie les victoires du joueur qui commence,
-        celles du second joueur et les nuls (pour étudier l'influence du premier joueur)."""
         nom_a = self.__joueur_a.get_nom()
         nom_b = self.__joueur_b.get_nom()
         moitie = nb_parties // 2
@@ -61,7 +56,6 @@ class Concours:
 
 
 def demander_entier(question):
-    """Redemande tant que la réponse n'est pas un nombre d'au moins 2."""
     reponse = input(question)
     while not reponse.isdigit() or int(reponse) < 2:
         reponse = input("Il faut un nombre entier d'au moins 2 : ")
@@ -69,7 +63,6 @@ def demander_entier(question):
 
 
 def choisir_ia(jeu, titre):
-    """Affiche la liste des IA et renvoie celle qui est choisie."""
     print()
     print(titre)
     print("1. Stupid Bot")

@@ -20,11 +20,7 @@ class Game:
     __NOMS_COULEURS = {1: "rouge", 2: "bleu"}
     __HAUTEUR_TEXTE = 70
 
-    def __init__(self, jeu, joueur_a, joueur_b, nb_parties=1,
-                 taille_case=60, delai_ia=600, pause_fin=1500):
-        """joueur_a / joueur_b : Human ou une IA. Ils alternent pour commencer.
-        delai_ia : temps minimal (ms) entre deux coups d'IA, pour pouvoir les suivre.
-        pause_fin : temps (ms) pendant lequel on montre la fin d'une partie."""
+    def __init__(self, jeu, joueur_a, joueur_b, nb_parties=1, taille_case=60, delai_ia=600, pause_fin=1500):
         pygame.init()
         self.__jeu = jeu
         self.__m = jeu.get_m()
@@ -43,7 +39,6 @@ class Game:
 
         self.__recommencer_serie()
 
-    # --- Gestion de la série de parties ---
     def __recommencer_serie(self):
         self.__partie = 1
         self.__victoires = [0, 0]  # victoires de joueur_a, de joueur_b
@@ -72,7 +67,7 @@ class Game:
 
     def __nom(self, index):
         nom = self.__participants[index].get_nom()
-        # Si c'est deux fois la même IA, on ajoute (A) ou (B) pour les distinguer
+
         if self.__participants[0].get_nom() == self.__participants[1].get_nom():
             if index == 0:
                 nom = nom + " (A)"
@@ -80,7 +75,6 @@ class Game:
                 nom = nom + " (B)"
         return nom
 
-    # --- Déroulé d'une partie ---
     def __jouer(self, coup):
         self.__jeu.jouer(coup)
         self.__instant = pygame.time.get_ticks()
@@ -92,7 +86,6 @@ class Game:
             else:
                 self.__victoires[self.__index(gagnant)] += 1
 
-    # --- Affichage ---
     def __texte_statut(self):
         if not self.__fin:
             courant = self.__jeu.get_joueur_courant()
@@ -138,7 +131,6 @@ class Game:
                     pygame.draw.circle(self.__ecran, self.__COULEURS["Bleu"],
                                        rectangle.center, self.__taille_case // 3)
 
-        # Les deux lignes de texte sous le plateau
         y = self.__m * self.__taille_case
         statut = self.__police.render(self.__texte_statut(), True, self.__COULEURS["Noir"])
         score = self.__police.render(self.__texte_score(), True, self.__COULEURS["Noir"])
@@ -146,7 +138,6 @@ class Game:
         self.__ecran.blit(score, (10, y + 38))
         pygame.display.flip()
 
-    # --- Boucle principale ---
     def lancer(self):
         en_cours = True
 
@@ -184,7 +175,6 @@ class Game:
 
 
 def choisir_joueur(jeu, titre):
-    """Affiche la liste des joueurs et renvoie celui qui est choisi."""
     print()
     print(titre)
     print("1. Humain")
