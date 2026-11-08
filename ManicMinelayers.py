@@ -1,74 +1,74 @@
+from copy import deepcopy
+
 class ManicMinelayers:
+    valeur_case_vide = 0
+    valeur_case_mine = 3
+    __sauts_possibles = ((-2, -1), (-2, 1), (-1, -2), (-1, 2),
+               (1, -2), (1, 2), (2, -1), (2, 1))
+
     def __init__(self, m=5, n=10):
-        self.m = m
-        self.n = n
+        self.__m = m
+        self.__n = n
+        self.reinitialiser()
 
-        self.plateau = []
-        for i in range(self.m):
-            ligne = []
-            for j in range(self.n):
-                ligne.append(0)
-            self.plateau.append(ligne)
+    def get_joueur_courant(self):
+        return self.__joueur_courant
 
-        self.positions = {1: None, 2: None}
+    # --- Gestion de la partie ---
+    def reinitialiser(self):
+        self.__plateau = [[self.valeur_case_vide] * self.__n for _ in range(self.__m)]
+        self.__positions = {1: None, 2: None}
+        self.__joueur_courant = 1
+
+    def copie(self):
+        return deepcopy(self)
 
     def adversaire(self, joueur):
-        if joueur == 1:
-            return 2
-        return 1
+        return 2 if joueur == 1 else 1
 
     def est_vide(self, ligne, colonne):
-        if ligne < 0 or ligne >= self.m or colonne < 0 or colonne >= self.n:
+        if not (0 <= ligne < self.__m and 0 <= colonne < self.__n):
             return False
-        if self.plateau[ligne][colonne] == 0:
-            return True
-        return False
+        return self.__plateau[ligne][colonne] == self.valeur_case_vide
 
-    def coups_possibles(self, joueur):
-        coups = []
-        position = self.positions[joueur]
+    def sauts_cavalier(self, ligne, colonne):
+        """Cases vides atteignables en un saut depuis (ligne, colonne)."""
+        cases = []
+        for dl, dc in self.__sauts_possibles:
+            if self.est_vide(ligne + dl, colonne + dc):
+                cases.append((ligne + dl, colonne + dc))
+        return cases
 
+    def coups_possibles_de(self, joueur):
+        position = self.__positions[joueur]
         if position is None:
-            if joueur == 1:
-                colonne = 0
-            else:
-                colonne = self.n - 1
+            colonne = 0 if joueur == 1 else self.__n - 1
+            return [(l, colonne) for l in range(self.__m) if self.est_vide(l, colonne)]
+        return self.sauts_cavalier(position[0], position[1])
 
-            for ligne in range(self.m):
-                if self.est_vide(ligne, colonne):
-                    coups.append((ligne, colonne))
-            return coups
+    def coups_possibles(self):
+        return self.coups_possibles_de(self.__joueur_courant)
 
-        sauts = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
-        for saut in sauts:
-            ligne = position[0] + saut[0]
-            colonne = position[1] + saut[1]
-            if self.est_vide(ligne, colonne):
-                coups.append((ligne, colonne))
-        return coups
-
-    def jouer_coup(self, coup, joueur):
-        if coup not in self.coups_possibles(joueur):
+    def jouer(self, coup):
+        joueur = self.__joueur_courant
+        if coup not in self.coups_possibles_de(joueur):
             raise ValueError("Coup invalide")
+        ancienne = self.__positions[joueur]
+        if ancienne is not None:
+            self.__plateau[ancienne[0]][ancienne[1]] = self.valeur_case_mine
+        self.__plateau[coup[0]][coup[1]] = joueur
+        self.__positions[joueur] = coup
+        self.__joueur_courant = self.adversaire(joueur)
 
-        ancienne_position = self.positions[joueur]
-        if ancienne_position is not None:
-            self.plateau[ancienne_position[0]][ancienne_position[1]] = 3
-
-        self.plateau[coup[0]][coup[1]] = joueur
-        self.positions[joueur] = coup
-
+    # --- Fin de partie ---
     def est_bloque(self, joueur):
-        if self.positions[joueur] is None:
+        if self.__positions[joueur] is None:
             return False
-        if len(self.coups_possibles(joueur)) == 0:
-            return True
-        return False
+        return len(self.coups_possibles_de(joueur)) == 0
 
-    def gagnant(self):
+    def get_gagnant(self):
         bloque_1 = self.est_bloque(1)
         bloque_2 = self.est_bloque(2)
-
         if bloque_2 and not bloque_1:
             return 1
         if bloque_1 and not bloque_2:
@@ -76,6 +76,7 @@ class ManicMinelayers:
         return 0
 
     def est_nul(self):
-        if self.est_bloque(1) and self.est_bloque(2):
-            return True
-        return False
+        return self.est_bloque(1) and self.est_bloque(2)
+
+    def est_fini(self):
+        return self.get_gagnant() != 0 or self.est_nul()
