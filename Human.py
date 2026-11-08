@@ -1,9 +1,12 @@
 class Human:
-    def __init__(self, jeu, joueur):
+    def __init__(self, jeu):
         self.__jeu = jeu
-        self.__joueur = joueur
+
+    def get_nom(self):
+        return "Humain"
 
     def choisir_coup(self, case):
-        if case in self.__jeu.coups_possibles_de(self.__joueur):
+        """Renvoie la case cliquée si c'est un coup légal, sinon None."""
+        if case in self.__jeu.coups_possibles():
             return case
         return None

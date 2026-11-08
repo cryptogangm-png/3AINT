@@ -75,17 +75,16 @@ class ManicMinelayers:
             return False
         return len(self.coups_possibles_de(joueur)) == 0
 
+    def est_fini(self):
+        return self.est_bloque(self.__joueur_courant)
+
     def get_gagnant(self):
-        bloque_1 = self.est_bloque(1)
-        bloque_2 = self.est_bloque(2)
-        if bloque_2 and not bloque_1:
-            return 1
-        if bloque_1 and not bloque_2:
-            return 2
-        return 0
+        if not self.est_fini():
+            return 0
+        precedent = self.adversaire(self.__joueur_courant)
+        if self.est_bloque(precedent):
+            return 0
+        return precedent
 
     def est_nul(self):
-        return self.est_bloque(1) and self.est_bloque(2)
-
-    def est_fini(self):
-        return self.get_gagnant() != 0 or self.est_nul()
+        return self.est_fini() and self.get_gagnant() == 0

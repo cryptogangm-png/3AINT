@@ -18,46 +18,96 @@ class Game:
         "Bleu": (50, 80, 220)
     }
     __NOMS_COULEURS = {1: "rouge", 2: "bleu"}
+    __HAUTEUR_TEXTE = 70
 
-    def __init__(self, jeu, joueur1, joueur2, taille_case=60, delai_ia=600):
-        """jeu : la partie (ManicMinelayers). joueur1 / joueur2 : Human ou une IA.
-        delai_ia : temps minimal (en ms) entre deux coups d'IA, pour pouvoir les suivre."""
+    def __init__(self, jeu, joueur_a, joueur_b, nb_parties=1,
+                 taille_case=60, delai_ia=600, pause_fin=1500):
+        """joueur_a / joueur_b : Human ou une IA. Ils alternent pour commencer.
+        delai_ia : temps minimal (ms) entre deux coups d'IA, pour pouvoir les suivre.
+        pause_fin : temps (ms) pendant lequel on montre la fin d'une partie."""
         pygame.init()
         self.__jeu = jeu
         self.__m = jeu.get_m()
         self.__n = jeu.get_n()
-        self.__joueurs = {1: joueur1, 2: joueur2}
+        self.__participants = (joueur_a, joueur_b)
+        self.__nb_parties = nb_parties
         self.__taille_case = taille_case
         self.__delai_ia = delai_ia
-        self.__fin = False
-        self.__dernier_coup = 0
-        self.__message = ""
-        self.__mettre_a_jour_message()
+        self.__pause_fin = pause_fin
 
         largeur = self.__n * self.__taille_case
-        hauteur = self.__m * self.__taille_case + 40
+        hauteur = self.__m * self.__taille_case + self.__HAUTEUR_TEXTE
         self.__ecran = pygame.display.set_mode((largeur, hauteur))
         pygame.display.set_caption("Manic Minelayers")
-        self.__police = pygame.font.SysFont("arial", 20)
+        self.__police = pygame.font.SysFont("arial", 18)
 
-    def __nom(self, numero):
-        joueur = self.__joueurs[numero]
-        if isinstance(joueur, Human):
-            return "Humain"
-        return joueur.get_nom()
+        self.__recommencer_serie()
 
-    def __mettre_a_jour_message(self):
-        gagnant = self.__jeu.get_gagnant()
-        if gagnant != 0:
+    # --- Gestion de la série de parties ---
+    def __recommencer_serie(self):
+        self.__partie = 1
+        self.__victoires = [0, 0]  # victoires de joueur_a, de joueur_b
+        self.__nuls = 0
+        self.__premier = 0         # 0 : joueur_a commence (rouge), 1 : joueur_b commence
+        self.__nouvelle_partie()
+
+    def __nouvelle_partie(self):
+        self.__jeu.reinitialiser()
+        self.__fin = False
+        self.__instant = pygame.time.get_ticks()  # dernier coup ou fin de partie
+
+    def __partie_suivante(self):
+        self.__partie += 1
+        self.__premier = 1 - self.__premier  # on alterne qui commence
+        self.__nouvelle_partie()
+
+    def __serie_terminee(self):
+        return self.__fin and self.__partie >= self.__nb_parties
+
+    def __index(self, numero):
+        """Indice (0 ou 1) du participant qui joue le pion numero (1 = rouge, 2 = bleu)."""
+        if numero == 1:
+            return self.__premier
+        return 1 - self.__premier
+
+    def __nom(self, index):
+        nom_a = self.__participants[0].get_nom()
+        nom_b = self.__participants[1].get_nom()
+        nom = self.__participants[index].get_nom()
+        if nom_a == nom_b:  # deux fois la même IA : on les distingue
+            nom += " (A)" if index == 0 else " (B)"
+        return nom
+
+    # --- Déroulé d'une partie ---
+    def __jouer(self, coup):
+        self.__jeu.jouer(coup)
+        self.__instant = pygame.time.get_ticks()
+        if self.__jeu.est_fini():
             self.__fin = True
-            self.__message = (f"Victoire de {self.__nom(gagnant)} "
-                              f"({self.__NOMS_COULEURS[gagnant]}) - R pour rejouer")
-        elif self.__jeu.est_nul():
-            self.__fin = True
-            self.__message = "Match nul - R pour rejouer"
-        else:
+            gagnant = self.__jeu.get_gagnant()
+            if gagnant == 0:
+                self.__nuls += 1
+            else:
+                self.__victoires[self.__index(gagnant)] += 1
+
+    # --- Affichage ---
+    def __texte_statut(self):
+        if not self.__fin:
             courant = self.__jeu.get_joueur_courant()
-            self.__message = f"Au tour de {self.__nom(courant)} ({self.__NOMS_COULEURS[courant]})"
+            return f"Au tour de {self.__nom(self.__index(courant))} ({self.__NOMS_COULEURS[courant]})"
+        gagnant = self.__jeu.get_gagnant()
+        if gagnant == 0:
+            texte = "Match nul"
+        else:
+            texte = f"Victoire de {self.__nom(self.__index(gagnant))} ({self.__NOMS_COULEURS[gagnant]})"
+        if self.__serie_terminee():
+            texte += " - Série terminée, R pour recommencer"
+        return texte
+
+    def __texte_score(self):
+        return (f"Partie {self.__partie}/{self.__nb_parties}   |   "
+                f"{self.__nom(0)} : {self.__victoires[0]}   "
+                f"{self.__nom(1)} : {self.__victoires[1]}   Nuls : {self.__nuls}")
 
     def __afficher(self):
         self.__ecran.fill(self.__COULEURS["Blanc"])
@@ -86,26 +136,19 @@ class Game:
                     pygame.draw.circle(self.__ecran, self.__COULEURS["Bleu"],
                                        rectangle.center, self.__taille_case // 3)
 
-        texte = self.__police.render(self.__message, True, self.__COULEURS["Noir"])
-        self.__ecran.blit(texte, (10, self.__m * self.__taille_case + 10))
+        y = self.__m * self.__taille_case
+        for ligne, texte in enumerate((self.__texte_statut(), self.__texte_score())):
+            surface = self.__police.render(texte, True, self.__COULEURS["Noir"])
+            self.__ecran.blit(surface, (10, y + 10 + ligne * 28))
         pygame.display.flip()
 
-    def __jouer(self, coup):
-        self.__jeu.jouer(coup)
-        self.__dernier_coup = pygame.time.get_ticks()
-        self.__mettre_a_jour_message()
-
-    def __recommencer(self):
-        self.__jeu.reinitialiser()
-        self.__fin = False
-        self.__dernier_coup = pygame.time.get_ticks()
-        self.__mettre_a_jour_message()
-
+    # --- Boucle principale ---
     def lancer(self):
         en_cours = True
 
         while en_cours:
-            joueur = self.__joueurs[self.__jeu.get_joueur_courant()]
+            maintenant = pygame.time.get_ticks()
+            joueur = self.__participants[self.__index(self.__jeu.get_joueur_courant())]
             tour_humain = isinstance(joueur, Human)
 
             for evenement in pygame.event.get():
@@ -113,7 +156,7 @@ class Game:
                     en_cours = False
 
                 elif evenement.type == pygame.KEYDOWN and evenement.key == pygame.K_r:
-                    self.__recommencer()
+                    self.__recommencer_serie()
 
                 elif (evenement.type == pygame.MOUSEBUTTONDOWN
                       and tour_humain and not self.__fin):
@@ -123,9 +166,11 @@ class Game:
                     if coup is not None:
                         self.__jouer(coup)
 
-            # Tour d'une IA : on attend le délai pour que l'on puisse suivre le coup.
-            if (en_cours and not self.__fin and not tour_humain
-                    and pygame.time.get_ticks() - self.__dernier_coup >= self.__delai_ia):
+            if self.__fin:
+                # On laisse voir la fin de partie, puis on enchaîne si la série continue.
+                if not self.__serie_terminee() and maintenant - self.__instant >= self.__pause_fin:
+                    self.__partie_suivante()
+            elif not tour_humain and maintenant - self.__instant >= self.__delai_ia:
                 self.__jouer(joueur.choisir_coup())
 
             self.__afficher()
@@ -134,17 +179,17 @@ class Game:
         pygame.quit()
 
 
-def choisir_joueur(jeu, numero):
-    """Petit menu console pour choisir qui joue."""
+def choisir_joueur(jeu, titre):
+    """Affiche la liste des joueurs dans le terminal et crée celui qui est choisi."""
     options = {
-        "1": ("Humain", lambda: Human(jeu, numero)),
+        "1": ("Humain", lambda: Human(jeu)),
         "2": ("Stupid Bot", lambda: StupidBot(jeu)),
         "3": ("MinMax heuristique 1", lambda: MinMax(jeu, profondeur=5, heuristique=1)),
         "4": ("MinMax heuristique 2", lambda: MinMax(jeu, profondeur=5, heuristique=2)),
         "5": ("Glouton", lambda: Glouton(jeu)),
         "6": ("MCTS", lambda: MCTS(jeu, iterations=1000)),
     }
-    print(f"\nJoueur {numero} ({'rouge' if numero == 1 else 'bleu'}) :")
+    print(f"\n{titre} :")
     for cle, (nom, _) in options.items():
         print(f"  {cle}. {nom}")
     choix = input("Choix : ").strip()
@@ -155,6 +200,6 @@ def choisir_joueur(jeu, numero):
 
 if __name__ == "__main__":
     jeu = ManicMinelayers(5, 10)
-    joueur1 = choisir_joueur(jeu, 1)
-    joueur2 = choisir_joueur(jeu, 2)
-    Game(jeu, joueur1, joueur2).lancer()
+    joueur_a = choisir_joueur(jeu, "Joueur 1 (rouge)")
+    joueur_b = choisir_joueur(jeu, "Joueur 2 (bleu)")
+    Game(jeu, joueur_a, joueur_b).lancer()

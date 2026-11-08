@@ -16,7 +16,7 @@ class Concours:
         self.__joueur_b = joueur_b
 
     def __jouer_une_partie(self, premier, second):
-        """Joue une partie complète et renvoie 1, 2 (correspondant au joueur gagnant) ou 0 en cas de match nul"""
+        """Joue une partie complète et renvoie 1, 2 (le gagnant) ou 0 (nul)."""
         self.__jeu.reinitialiser()
         while not self.__jeu.est_fini():
             if self.__jeu.get_joueur_courant() == 1:
@@ -27,7 +27,7 @@ class Concours:
         return self.__jeu.get_gagnant()
 
     def __jouer_serie(self, premier, second, nb_parties):
-        """Renvoie les scores dans l'ordre : victoires du joueur 1, victoires du joueur 2, matchs nuls."""
+        """Renvoie (victoires du premier, victoires du second, nuls)."""
         victoires_premier = 0
         victoires_second = 0
         nuls = 0
@@ -52,6 +52,33 @@ class Concours:
             "a_commence": a_commence,  # (victoires A, victoires B, nuls)
             "b_commence": b_commence,  # (victoires B, victoires A, nuls)
         }
+
+
+def demander_entier(question, minimum=1):
+    """Redemande tant que la réponse n'est pas un entier valide."""
+    while True:
+        reponse = input(question).strip()
+        if reponse.isdigit() and int(reponse) >= minimum:
+            return int(reponse)
+        print(f"Il faut un nombre entier supérieur ou égal à {minimum}.")
+
+
+def choisir_ia(jeu, titre):
+    """Affiche la liste des IA dans le terminal et crée celle qui est choisie."""
+    options = {
+        "1": ("Stupid Bot", lambda: StupidBot(jeu)),
+        "2": ("MinMax heuristique 1", lambda: MinMax(jeu, profondeur=5, heuristique=1)),
+        "3": ("MinMax heuristique 2", lambda: MinMax(jeu, profondeur=5, heuristique=2)),
+        "4": ("Glouton", lambda: Glouton(jeu)),
+        "5": ("MCTS", lambda: MCTS(jeu, iterations=300)),
+    }
+    print(f"\n{titre} :")
+    for cle, (nom, _) in options.items():
+        print(f"  {cle}. {nom}")
+    choix = input("Choix : ").strip()
+    while choix not in options:
+        choix = input("Choix invalide, recommence : ").strip()
+    return options[choix][1]()
 
 
 def afficher_resultats(resultats, nb_parties):
@@ -84,22 +111,33 @@ def afficher_resultats(resultats, nb_parties):
 
 
 if __name__ == "__main__":
-    nombre_de_parties = 100
     jeu = ManicMinelayers(5, 10)
+    nb_parties = demander_entier("Nombre de parties par affrontement : ", minimum=2)
 
-    joueurs = [
-        MinMax(jeu, profondeur=5, heuristique=1),
-        MinMax(jeu, profondeur=5, heuristique=2),
-        StupidBot(jeu),
-        Glouton(jeu),
-        MCTS(jeu, iterations=300),
-    ]
+    print("\n1. Statistiques sur tous les couples d'IA (sans affichage)")
+    print("2. Regarder un affrontement entre deux IA dans la GUI")
+    mode = input("Choix : ").strip()
+    while mode not in ("1", "2"):
+        mode = input("Choix invalide, recommence : ").strip()
 
-    resultats = []
-    for joueur_a, joueur_b in combinations(joueurs, 2):
-        debut = time.perf_counter()
-        print(f"{joueur_a.get_nom()} contre {joueur_b.get_nom()}...", end=" ", flush=True)
-        resultats.append(Concours(jeu, joueur_a, joueur_b).lancer(nombre_de_parties))
-        print(f"{time.perf_counter() - debut:.1f} s")
+    if mode == "1":
+        joueurs = [
+            MinMax(jeu, profondeur=5, heuristique=1),
+            MinMax(jeu, profondeur=5, heuristique=2),
+            StupidBot(jeu),
+            Glouton(jeu),
+            MCTS(jeu, iterations=300),
+        ]
+        resultats = []
+        for joueur_a, joueur_b in combinations(joueurs, 2):
+            debut = time.perf_counter()
+            print(f"{joueur_a.get_nom()} contre {joueur_b.get_nom()}...", end=" ", flush=True)
+            resultats.append(Concours(jeu, joueur_a, joueur_b).lancer(nb_parties))
+            print(f"{time.perf_counter() - debut:.1f} s")
+        afficher_resultats(resultats, nb_parties)
 
-    afficher_resultats(resultats, nombre_de_parties)
+    else:
+        from Game import Game
+        joueur_a = choisir_ia(jeu, "IA A (commence la première partie)")
+        joueur_b = choisir_ia(jeu, "IA B")
+        Game(jeu, joueur_a, joueur_b, nb_parties, delai_ia=300, pause_fin=1000).lancer()
