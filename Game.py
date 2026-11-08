@@ -3,75 +3,78 @@ import pygame
 from ManicMinelayers import ManicMinelayers
 from Human import Human
 
-Couleurs = {
-    "Blanc": (255, 255, 255),
-    "Noir": (0, 0, 0),
-    "Gris": (100, 100, 100),
-    "Vert": (150, 220, 150),
-    "Rouge": (220, 50, 50),
-    "Bleu": (50, 80, 220)
-}
 
 class Game:
+    __COULEURS = {
+        "Blanc": (255, 255, 255),
+        "Noir": (0, 0, 0),
+        "Gris": (100, 100, 100),
+        "Vert": (150, 220, 150),
+        "Rouge": (220, 50, 50),
+        "Bleu": (50, 80, 220)
+    }
+
     def __init__(self, m=5, n=10, taille_case=60):
         pygame.init()
-        self.jeu = ManicMinelayers(m, n)
-        self.joueurs = {1: Human(self.jeu, 1), 2: Human(self.jeu, 2)}
-        self.joueur_actuel = 1
-        self.fin = False
-        self.message = "Au tour du joueur 1 (rouge)"
-        self.taille_case = taille_case
+        self.__m = m
+        self.__n = n
+        self.__jeu = ManicMinelayers(m, n)
+        self.__joueurs = {1: Human(self.__jeu, 1), 2: Human(self.__jeu, 2)}
+        self.__fin = False
+        self.__message = "Au tour du joueur 1 (rouge)"
+        self.__taille_case = taille_case
 
-        largeur = n * self.taille_case
-        hauteur = m * self.taille_case + 40
-        self.ecran = pygame.display.set_mode((largeur, hauteur))
+        largeur = n * self.__taille_case
+        hauteur = m * self.__taille_case + 40
+        self.__ecran = pygame.display.set_mode((largeur, hauteur))
         pygame.display.set_caption("Manic Minelayers")
-        self.police = pygame.font.SysFont("arial", 22)
+        self.__police = pygame.font.SysFont("arial", 22)
 
-    def afficher(self):
-        self.ecran.fill(Couleurs["Blanc"])
+    def __afficher(self):
+        self.__ecran.fill(self.__COULEURS["Blanc"])
 
         coups = []
-        if not self.fin:
-            coups = self.jeu.coups_possibles(self.joueur_actuel)
+        if not self.__fin:
+            coups = self.__jeu.coups_possibles()
 
-        for i in range(self.jeu.m):
-            for j in range(self.jeu.n):
-                rectangle = pygame.Rect(j * self.taille_case, i * self.taille_case, self.taille_case, self.taille_case)
-                valeur = self.jeu.plateau[i][j]
+        for i in range(self.__m):
+            for j in range(self.__n):
+                rectangle = pygame.Rect(j * self.__taille_case, i * self.__taille_case,
+                                        self.__taille_case, self.__taille_case)
+                valeur = self.__jeu.get_case(i, j)
 
-                if valeur == 3:
-                    pygame.draw.rect(self.ecran, Couleurs["Gris"], rectangle)
+                if valeur == ManicMinelayers.MINE:
+                    pygame.draw.rect(self.__ecran, self.__COULEURS["Gris"], rectangle)
                 elif (i, j) in coups:
-                    pygame.draw.rect(self.ecran, Couleurs["Vert"], rectangle)
+                    pygame.draw.rect(self.__ecran, self.__COULEURS["Vert"], rectangle)
 
-                pygame.draw.rect(self.ecran, Couleurs["Noir"], rectangle, 1)
+                pygame.draw.rect(self.__ecran, self.__COULEURS["Noir"], rectangle, 1)
 
                 if valeur == 1:
-                    pygame.draw.circle(self.ecran, Couleurs["Rouge"], rectangle.center, self.taille_case // 3)
+                    pygame.draw.circle(self.__ecran, self.__COULEURS["Rouge"],
+                                       rectangle.center, self.__taille_case // 3)
                 elif valeur == 2:
-                    pygame.draw.circle(self.ecran, Couleurs["Bleu"], rectangle.center, self.taille_case // 3)
+                    pygame.draw.circle(self.__ecran, self.__COULEURS["Bleu"],
+                                       rectangle.center, self.__taille_case // 3)
 
-        texte = self.police.render(self.message, True, Couleurs["Noir"])
-        self.ecran.blit(texte, (10, self.jeu.m * self.taille_case + 10))
+        texte = self.__police.render(self.__message, True, self.__COULEURS["Noir"])
+        self.__ecran.blit(texte, (10, self.__m * self.__taille_case + 10))
         pygame.display.flip()
 
-    def jouer(self, coup):
-        self.jeu.jouer_coup(coup, self.joueur_actuel)
+    def __jouer(self, coup):
+        self.__jeu.jouer(coup)
 
-        gagnant = self.jeu.gagnant()
+        gagnant = self.__jeu.get_gagnant()
         if gagnant != 0:
-            self.fin = True
-            self.message = "Victoire du joueur " + str(gagnant)
-        elif self.jeu.est_nul():
-            self.fin = True
-            self.message = "Match nul"
+            self.__fin = True
+            self.__message = "Victoire du joueur " + str(gagnant)
+        elif self.__jeu.est_nul():
+            self.__fin = True
+            self.__message = "Match nul"
+        elif self.__jeu.get_joueur_courant() == 1:
+            self.__message = "Au tour du joueur 1 (rouge)"
         else:
-            self.joueur_actuel = self.jeu.adversaire(self.joueur_actuel)
-            if self.joueur_actuel == 1:
-                self.message = "Au tour du joueur 1 (rouge)"
-            else:
-                self.message = "Au tour du joueur 2 (bleu)"
+            self.__message = "Au tour du joueur 2 (bleu)"
 
     def lancer(self):
         en_cours = True
@@ -81,14 +84,15 @@ class Game:
                 if evenement.type == pygame.QUIT:
                     en_cours = False
 
-                elif evenement.type == pygame.MOUSEBUTTONDOWN and not self.fin:
+                elif evenement.type == pygame.MOUSEBUTTONDOWN and not self.__fin:
                     x, y = evenement.pos
-                    case = (y // self.taille_case, x // self.taille_case)
-                    coup = self.joueurs[self.joueur_actuel].choisir_coup(case)
+                    case = (y // self.__taille_case, x // self.__taille_case)
+                    joueur = self.__joueurs[self.__jeu.get_joueur_courant()]
+                    coup = joueur.choisir_coup(case)
                     if coup is not None:
-                        self.jouer(coup)
+                        self.__jouer(coup)
 
-            self.afficher()
+            self.__afficher()
 
         pygame.quit()
 

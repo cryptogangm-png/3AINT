@@ -1,9 +1,9 @@
 class Human:
     def __init__(self, jeu, joueur):
-        self.jeu = jeu
-        self.joueur = joueur
+        self.__jeu = jeu
+        self.__joueur = joueur
 
     def choisir_coup(self, case):
-        if case in self.jeu.coups_possibles(self.joueur):
+        if case in self.__jeu.coups_possibles_de(self.__joueur):
             return case
         return None
