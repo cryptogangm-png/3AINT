@@ -22,8 +22,8 @@ class MinMax:
         for coup in self.__jeu.coups_possibles():
             copie = self.__jeu.copie()
             copie.jouer(coup)
-            score = self.__minmax(copie, self.__profondeur - 1, -math.inf, math.inf)
-
+            score = self.__minmax(copie, self.__profondeur - 1, meilleur_score - 1, math.inf)
+            
             if score > meilleur_score:
                 meilleur_score = score
                 meilleurs_coups = [coup]
