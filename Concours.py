@@ -48,8 +48,8 @@ class Concours:
 if __name__ == "__main__":
     jeu = ManicMinelayers(5, 10)
 
-    minmax_h1 = MinMax(jeu, profondeur=3, heuristique=1)
-    minmax_h2 = MinMax(jeu, profondeur=3, heuristique=2)
+    minmax_h1 = MinMax(jeu, profondeur=5, heuristique=1)
+    minmax_h2 = MinMax(jeu, profondeur=5, heuristique=2)
     stupid_bot = StupidBot(jeu)
 
     Concours(jeu, minmax_h1, stupid_bot).lancer(20)
